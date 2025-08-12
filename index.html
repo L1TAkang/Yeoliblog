@@ -460,7 +460,7 @@
             if(wrapper) {
                 const bannerHTML = post.bannerUrl ? `<img src="${post.bannerUrl}" alt="Banner Image" class="banner-image mb-8 rounded-lg">` : '';
                 const dividerHTML = `<hr class="my-6 border-gray-200">`;
-                wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4 font-noto-serif">${post.title}</h2><p class="text-gray-500 mb-6">${post.date}</p>${dividerHTML}<div class="content-body leading-relaxed text-gray-700">${post.content}</div></article>`;
+                wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h2><p class="text-gray-500 mb-6">${post.date}</p>${dividerHTML}<div class="content-body leading-relaxed text-gray-700">${post.content}</div></article>`;
             }
         }
         
