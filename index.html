@@ -27,8 +27,70 @@
         main::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
         .editor-content:focus { outline: none; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
         #aside-menu { transition: transform 0.3s ease-in-out; }
-        blockquote { border-left: 4px solid #1f2937; padding-left: 1rem; margin: 1.5rem 0; font-style: italic; color: #4b5563; }
         .banner-image { width: 100%; height: 300px; object-fit: cover; }
+
+        /* 편집기와 본문의 공통 스타일 */
+        .content-body, .editor-content {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .content-body h2, .content-body h3, .content-body h4,
+        .editor-content h2, .editor-content h3, .editor-content h4 {
+            font-weight: 700;
+            line-height: 1.3;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        .content-body h2, .editor-content h2 { font-size: 1.875rem; }
+        .content-body h3, .editor-content h3 { font-size: 1.5rem; }
+        .content-body h4, .editor-content h4 { font-size: 1.25rem; }
+        
+        .content-body p, .editor-content p {
+            margin-top: 1.25em;
+            margin-bottom: 1.25em;
+        }
+        
+        .content-body blockquote, .editor-content blockquote {
+            border-left: 4px solid #1f2937;
+            padding-left: 1rem;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: #4b5563;
+        }
+
+        .content-body hr, .editor-content hr {
+            border-top: 1px solid #e5e7eb;
+            margin: 2rem 0;
+        }
+        
+        .content-body ul, .editor-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+            margin: 1.25em 0;
+        }
+
+        /* 툴바 스타일 */
+        .toolbar-btn {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        .toolbar-btn:hover { background-color: #e5e7eb; }
+        .toolbar-btn.active { background-color: #d1d5db; }
+        .toolbar-select {
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            padding: 0.1rem 0.25rem;
+            font-size: 0.875rem;
+        }
+        .toolbar-color-picker {
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            width: 2rem;
+            height: 2rem;
+            padding: 2px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-white text-gray-800 overflow-hidden">
@@ -114,7 +176,36 @@
                             <label for="editor-pin-toggle" class="ml-2 text-sm">게시물 고정</label>
                         </div>
                     </div>
-                    <div id="editor-content" contenteditable="true" class="flex-grow border border-gray-300 rounded-md p-2 overflow-y-auto editor-content"></div>
+                    <div class="flex-grow flex flex-col">
+                        <div id="editor-toolbar" class="flex items-center space-x-2 p-2 border border-b-0 border-gray-300 bg-gray-50 rounded-t-md flex-wrap">
+                            <select id="font-family-select" class="toolbar-select">
+                                <option value="Pretendard, sans-serif">Pretendard</option>
+                                <option value="Noto Serif KR, serif">Noto Serif KR</option>
+                            </select>
+                            <select id="font-size-select" class="toolbar-select">
+                                <option value="14px">14px (작게)</option>
+                                <option value="16px" selected>16px (보통)</option>
+                                <option value="20px">20px (크게)</option>
+                            </select>
+                             <select id="line-height-select" class="toolbar-select">
+                                <option value="1.2">줄간격 1.2</option>
+                                <option value="1.4">줄간격 1.4</option>
+                                <option value="1.6" selected>줄간격 1.6</option>
+                            </select>
+                            <input type="color" id="font-color-picker" class="toolbar-color-picker" value="#000000">
+                            <div class="w-px h-5 bg-gray-300"></div>
+                            <button data-command="bold" class="toolbar-btn font-bold">B</button>
+                            <button data-command="italic" class="toolbar-btn italic">I</button>
+                            <div class="w-px h-5 bg-gray-300"></div>
+                            <button data-command="formatBlock" data-value="h2" class="toolbar-btn text-lg font-bold">H2</button>
+                            <button data-command="formatBlock" data-value="h3" class="toolbar-btn text-base font-bold">H3</button>
+                            <button data-command="formatBlock" data-value="h4" class="toolbar-btn text-sm font-bold">H4</button>
+                            <div class="w-px h-5 bg-gray-300"></div>
+                            <button data-command="formatBlock" data-value="blockquote" class="toolbar-btn text-gray-500 text-lg">“ ”</button>
+                            <button data-command="insertHorizontalRule" class="toolbar-btn text-gray-500">-</button>
+                        </div>
+                        <div id="editor-content" contenteditable="true" class="flex-grow border border-gray-300 rounded-b-md p-2 overflow-y-auto editor-content"></div>
+                    </div>
                     <div class="flex flex-col sm:flex-row justify-between items-center mt-4">
                         <button id="editor-delete-btn" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md mb-2 sm:mb-0">삭제</button>
                         <div class="space-x-2">
@@ -167,32 +258,56 @@
         </div>
     </div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- 로컬 스토리지 함수 ---
-        const savePostsToLocalStorage = () => {
-            localStorage.setItem('yeoliBlogPosts', JSON.stringify(posts));
-        };
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, getDocs, addDoc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-        const loadPostsFromLocalStorage = () => {
-            const savedPosts = localStorage.getItem('yeoliBlogPosts');
-            if (savedPosts) {
-                return JSON.parse(savedPosts);
-            } else {
-                // 로컬 스토리지에 데이터가 없으면 기본 데이터 반환
-                return [
-                    { id: 1, title: "새로운 시작, 코딩 첫걸음", date: "2025-08-12", content: `<p>코딩의 세계에 오신 것을 환영합니다...</p>`, isPinned: true, bannerUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop' },
-                    { id: 2, title: "CSS 레이아웃의 모든 것", date: "2025-08-10", content: `<p>CSS 레이아웃은 웹 디자인의 뼈대를 만드는 중요한 기술입니다...</p>`, isPinned: false, bannerUrl: null },
-                    { id: 3, title: "JavaScript 비동기 처리 이해하기", date: "2025-08-08", content: `<p>Promise와 async/await를 사용하여...</p>`, isPinned: false, bannerUrl: 'https://images.unsplash.com/photo-1526498460520-4c246339dccb?q=80&w=2070&auto=format&fit=crop' }
-                ];
+        // --- Firebase 설정 ---
+        // 이 값들은 환경에 따라 자동으로 제공됩니다.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO", authDomain: "DEMO", projectId: "DEMO" };
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-blog-app';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let postsCollection;
+        let posts = []; // 로컬 데이터 캐시
+        let unsubscribe = () => {}; // 실시간 리스너 해제 함수
+
+        async function initApp() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                const userId = auth.currentUser.uid;
+                postsCollection = collection(db, `artifacts/${appId}/users/${userId}/posts`);
+                
+                // 실시간 데이터 리스너 설정
+                unsubscribe = onSnapshot(postsCollection, (snapshot) => {
+                    const fetchedPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Firestore에는 정렬 순서가 보장되지 않으므로, 클라이언트에서 정렬합니다.
+                    posts = fetchedPosts.sort((a, b) => b.createdAt - a.createdAt);
+                    renderBlog();
+                });
+
+            } catch (error) {
+                console.error("Firebase 초기화 또는 데이터 로딩 실패:", error);
+                document.getElementById('main-container').innerHTML = `<div class="text-center text-red-500 p-8">데이터베이스 연결에 실패했습니다.</div>`;
             }
-        };
+        }
 
         // --- 데이터 관리 ---
-        let posts = loadPostsFromLocalStorage(); // 페이지 로드 시 데이터 불러오기
         let currentEditingPostId = null;
         let isCreatingNewPost = false;
         let tempBannerUrl = null;
+        let savedRange = null;
 
         // --- DOM 요소 ---
         const mainContainer = document.getElementById('main-container');
@@ -208,6 +323,7 @@
         const editorTitle = document.getElementById('editor-title');
         const editorDate = document.getElementById('editor-date');
         const editorPinToggle = document.getElementById('editor-pin-toggle');
+        const editorToolbar = document.getElementById('editor-toolbar');
         const editorContent = document.getElementById('editor-content');
         const editorSaveBtn = document.getElementById('editor-save-btn');
         const editorDeleteBtn = document.getElementById('editor-delete-btn');
@@ -229,6 +345,10 @@
         const deleteConfirmMessage = document.getElementById('delete-confirm-message');
         const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
         const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+        const fontFamilySelect = document.getElementById('font-family-select');
+        const fontSizeSelect = document.getElementById('font-size-select');
+        const lineHeightSelect = document.getElementById('line-height-select');
+        const fontColorPicker = document.getElementById('font-color-picker');
 
         function renderBlog() {
             mainContainer.innerHTML = '';
@@ -257,7 +377,7 @@
                 renderPostContent(firstPostToShow.id);
                 highlightActiveLink(firstPostToShow.id);
             } else {
-                document.getElementById('post-content-wrapper').innerHTML = `<div class="text-center text-gray-500">게시물이 없습니다.</div>`;
+                document.getElementById('post-content-wrapper').innerHTML = `<div class="text-center text-gray-500">게시물이 없습니다. 관리자 모드에서 새 글을 작성해보세요.</div>`;
             }
         }
 
@@ -267,14 +387,14 @@
             const wrapper = document.getElementById('post-content-wrapper');
             if(wrapper) {
                 const bannerHTML = post.bannerUrl ? `<img src="${post.bannerUrl}" alt="Banner Image" class="banner-image mb-8">` : '';
-                const dividerHTML = `<hr class="my-6 border-gray-200">`; // 수정: 색상 및 간격 조정
-                wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h3 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h3><p class="text-gray-500 mb-6">${new Date(post.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>${dividerHTML}<div class="space-y-6 text-lg leading-relaxed text-gray-700">${post.content}</div></article>`;
+                const dividerHTML = `<hr class="my-6 border-gray-200">`;
+                wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h3 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h3><p class="text-gray-500 mb-6">${post.date}</p>${dividerHTML}<div class="content-body leading-relaxed text-gray-700">${post.content}</div></article>`;
             }
         }
         
         function highlightActiveLink(postId) {
             document.querySelectorAll('.post-link').forEach(link => {
-                const isMatch = parseInt(link.dataset.id) === postId;
+                const isMatch = link.dataset.id === postId;
                 link.classList.toggle('bg-white', isMatch);
                 link.classList.toggle('font-semibold', isMatch);
                 link.classList.toggle('text-gray-900', isMatch);
@@ -286,7 +406,7 @@
             if (e.target.closest('.post-link')) {
                 e.preventDefault();
                 const link = e.target.closest('.post-link');
-                const postId = parseInt(link.dataset.id);
+                const postId = link.dataset.id;
                 renderPostContent(postId);
                 highlightActiveLink(postId);
                 if (window.innerWidth < 768) {
@@ -305,12 +425,14 @@
         
         function toggleMobileMenu(show) {
             const asideMenu = document.getElementById('aside-menu');
-            if (show) {
-                mobileMenuOverlay.classList.remove('hidden');
-                asideMenu.classList.remove('-translate-x-full');
-            } else {
-                mobileMenuOverlay.classList.add('hidden');
-                asideMenu.classList.add('-translate-x-full');
+            if (asideMenu) {
+                if (show) {
+                    mobileMenuOverlay.classList.remove('hidden');
+                    asideMenu.classList.remove('-translate-x-full');
+                } else {
+                    mobileMenuOverlay.classList.add('hidden');
+                    asideMenu.classList.add('-translate-x-full');
+                }
             }
         }
         mobileMenuBtn.addEventListener('click', () => toggleMobileMenu(true));
@@ -374,7 +496,7 @@
             if (e.target.closest('.editor-post-link')) {
                 e.preventDefault();
                 const link = e.target.closest('.editor-post-link');
-                const postId = parseInt(link.dataset.id);
+                const postId = link.dataset.id;
                 loadPostInEditor(postId);
             }
         });
@@ -397,8 +519,8 @@
             editorSaveBtn.textContent = "수정 완료";
             updateBannerButtons();
             document.querySelectorAll('.editor-post-link').forEach(link => {
-                link.classList.toggle('bg-gray-300', parseInt(link.dataset.id) === postId);
-                link.classList.toggle('font-semibold', parseInt(link.dataset.id) === postId);
+                link.classList.toggle('bg-gray-300', link.dataset.id === postId);
+                link.classList.toggle('font-semibold', link.dataset.id === postId);
             });
         }
 
@@ -420,15 +542,93 @@
             });
             editorTitle.focus();
         }
+        
+        // --- 툴바 로직 (수정됨) ---
+        function applyStyle(command, value = null) {
+            editorContent.focus();
+            if (savedRange) {
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(savedRange);
+            }
+            document.execCommand(command, false, value);
+            updateToolbarState();
+        }
 
-        editorContent.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'q') {
+        function applySpanStyle(styleProperty, value) {
+            editorContent.focus();
+            if (savedRange) {
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(savedRange);
+            }
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (range.collapsed) {
+                    return;
+                }
+                const span = document.createElement('span');
+                span.style[styleProperty] = value;
+                try {
+                    span.appendChild(range.extractContents());
+                    range.insertNode(span);
+                } catch(e) {
+                    console.error(e);
+                    showAlert("복잡한 선택 영역에는 스타일을 적용할 수 없습니다.", true);
+                }
+            }
+        }
+        
+        editorToolbar.addEventListener('click', (e) => {
+            const button = e.target.closest('button');
+            if (button && button.dataset.command) {
                 e.preventDefault();
-                document.execCommand('formatBlock', false, 'blockquote');
+                applyStyle(button.dataset.command, button.dataset.value || null);
             }
         });
 
-        editorDeleteBtn.addEventListener('click', () => {
+        fontFamilySelect.addEventListener('change', (e) => applyStyle('fontName', e.target.value));
+        fontSizeSelect.addEventListener('change', (e) => applySpanStyle('fontSize', e.target.value));
+        fontColorPicker.addEventListener('input', (e) => applyStyle('foreColor', e.target.value));
+        lineHeightSelect.addEventListener('change', (e) => applySpanStyle('lineHeight', e.target.value));
+
+        editorContent.addEventListener('blur', (e) => {
+            const selection = window.getSelection();
+            if (editorToolbar.contains(e.relatedTarget)) {
+                if (selection.rangeCount > 0) {
+                    savedRange = selection.getRangeAt(0).cloneRange();
+                }
+            } else {
+                savedRange = null;
+            }
+        });
+
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement === editorContent) {
+                 updateToolbarState();
+            }
+        });
+
+        function updateToolbarState() {
+            ['bold', 'italic', 'insertUnorderedList'].forEach(command => {
+                const button = editorToolbar.querySelector(`[data-command="${command}"]`);
+                if (button) {
+                    button.classList.toggle('active', document.queryCommandState(command));
+                }
+            });
+
+            let parentNode = window.getSelection().anchorNode;
+            if (parentNode && parentNode.nodeType !== 1) {
+                parentNode = parentNode.parentNode;
+            }
+            
+            editorToolbar.querySelectorAll('[data-command="formatBlock"]').forEach(button => {
+                const tag = button.dataset.value;
+                button.classList.toggle('active', parentNode && parentNode.closest(tag));
+            });
+        }
+
+
+        editorDeleteBtn.addEventListener('click', async () => {
             if (isCreatingNewPost || currentEditingPostId === null) return;
             const postToDelete = posts.find(p => p.id === currentEditingPostId);
             if (postToDelete) {
@@ -438,36 +638,39 @@
         });
 
         deleteCancelBtn.addEventListener('click', () => deleteConfirmModal.classList.add('hidden'));
-        deleteConfirmBtn.addEventListener('click', () => {
+        deleteConfirmBtn.addEventListener('click', async () => {
             if (currentEditingPostId === null) return;
-            posts = posts.filter(p => p.id !== currentEditingPostId);
-            savePostsToLocalStorage(); // 변경사항 저장
+            await deleteDoc(doc(postsCollection, currentEditingPostId));
             deleteConfirmModal.classList.add('hidden');
             showAlert("게시물이 삭제되었습니다.");
-            renderBlog();
-            populateEditorPostList();
+            // onSnapshot이 자동으로 UI를 업데이트하므로, 여기서는 편집기 상태만 초기화
             startNewPost();
         });
 
-        editorSaveBtn.addEventListener('click', () => {
+        editorSaveBtn.addEventListener('click', async () => {
             let savedPostId;
+            const postData = {
+                title: editorTitle.value,
+                date: editorDate.value,
+                content: editorContent.innerHTML,
+                isPinned: editorPinToggle.checked,
+                bannerUrl: tempBannerUrl,
+                createdAt: serverTimestamp()
+            };
+
             if (isCreatingNewPost) {
-                const newPost = { id: Date.now(), title: editorTitle.value, date: editorDate.value, content: editorContent.innerHTML, isPinned: editorPinToggle.checked, bannerUrl: tempBannerUrl };
-                posts.unshift(newPost);
-                savedPostId = newPost.id;
+                const docRef = await addDoc(postsCollection, postData);
+                savedPostId = docRef.id;
                 showAlert("새 게시물이 발행되었습니다.");
             } else {
                 if (currentEditingPostId === null) return;
-                const postIndex = posts.findIndex(p => p.id === currentEditingPostId);
-                if (postIndex === -1) return;
-                posts[postIndex] = { ...posts[postIndex], title: editorTitle.value, date: editorDate.value, content: editorContent.innerHTML, isPinned: editorPinToggle.checked, bannerUrl: tempBannerUrl };
+                await setDoc(doc(postsCollection, currentEditingPostId), postData, { merge: true });
                 savedPostId = currentEditingPostId;
                 showAlert("게시물이 성공적으로 수정되었습니다.");
             }
-            savePostsToLocalStorage(); // 변경사항 저장
-            renderBlog();
-            populateEditorPostList();
+            // onSnapshot이 UI를 업데이트 하므로, 편집기만 다시 로드
             loadPostInEditor(savedPostId);
+            populateEditorPostList();
         });
 
         // Banner Modal Logic
@@ -552,7 +755,7 @@
             if (e.key === 'Enter') searchUnsplash(e.target.value);
         });
         
-        renderBlog();
+        initApp();
     });
     </script>
 </body>
