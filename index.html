@@ -36,28 +36,42 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
         }
+        
+        /* 모바일 메뉴 슬라이드 애니메이션 */
+        #aside-menu {
+            transition: transform 0.3s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-white text-gray-800 overflow-hidden">
 
     <!-- 1. 헤더 -->
-    <header class="fixed top-0 left-0 w-full h-16 bg-black flex items-center justify-between px-6 z-10">
-        <h1 class="text-3xl font-bold text-white tracking-wider font-noto-serif">Yeoli Blog</h1>
+    <header class="fixed top-0 left-0 w-full h-16 bg-black flex items-center justify-between px-4 md:px-6 z-20">
+        <div class="flex items-center">
+            <!-- 모바일용 햄버거 메뉴 버튼 -->
+            <button id="mobile-menu-btn" class="text-white mr-4 md:hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <h1 class="text-2xl md:text-3xl font-bold text-white tracking-wider font-noto-serif">Yeoli Blog</h1>
+        </div>
         <button id="open-editor-btn" class="text-white hover:text-gray-300 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
         </button>
     </header>
+    
+    <!-- 모바일 메뉴 오버레이 -->
+    <div id="mobile-menu-overlay" class="hidden fixed inset-0 bg-black/50 z-30 md:hidden"></div>
 
     <!-- 2. 메인 컨테이너 -->
-    <div id="main-container" class="flex pt-16">
+    <div id="main-container" class="flex pt-16 h-screen">
         <!-- JavaScript로 동적 생성됩니다. -->
     </div>
 
     <!-- 3. 비밀번호 입력 모달 -->
-    <div id="password-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-8 shadow-xl">
+    <div id="password-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg p-8 shadow-xl w-full max-w-sm">
             <h2 class="text-lg font-bold mb-4">관리자 로그인</h2>
             <form id="password-form">
                 <label for="password-input" class="block text-sm font-medium text-gray-700">비밀번호를 입력하세요</label>
@@ -77,8 +91,8 @@
                 <h2 class="text-xl font-bold">게시물 편집기</h2>
                 <button id="editor-close-btn" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
             </div>
-            <div class="flex-grow flex min-h-0">
-                <div class="w-1/4 border-r flex flex-col bg-gray-50">
+            <div class="flex-grow flex flex-col md:flex-row min-h-0">
+                <div class="w-full md:w-1/4 border-b md:border-b-0 md:border-r flex flex-col bg-gray-50">
                     <div id="editor-post-list" class="flex-grow overflow-y-auto p-4"></div>
                     <div class="p-4 border-t">
                         <button id="add-new-post-btn" class="w-full flex items-center justify-center px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
@@ -87,13 +101,13 @@
                         </button>
                     </div>
                 </div>
-                <div class="w-3/4 flex flex-col p-4 overflow-y-auto">
+                <div class="w-full md:w-3/4 flex flex-col p-4 overflow-y-auto">
                     <div class="mb-4">
                         <label for="editor-title" class="block text-sm font-medium text-gray-700">제목</label>
                         <input type="text" id="editor-title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                     </div>
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
+                        <div class="mb-4 sm:mb-0">
                             <label for="editor-date" class="block text-sm font-medium text-gray-700">발행일</label>
                             <input type="date" id="editor-date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
                         </div>
@@ -106,8 +120,8 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">내용</label>
                         <div id="editor-content" contenteditable="true" class="flex-grow border border-gray-300 rounded-md p-2 overflow-y-auto editor-content"></div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <button id="editor-delete-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">삭제</button>
+                    <div class="flex flex-col sm:flex-row justify-between items-center">
+                        <button id="editor-delete-btn" class="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed mb-2 sm:mb-0">삭제</button>
                         <div class="space-x-2">
                             <button id="editor-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">취소</button>
                             <button id="editor-save-btn" class="px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">저장</button>
@@ -119,12 +133,12 @@
     </div>
 
     <!-- 5. 커스텀 알림창 -->
-    <div id="custom-alert" class="hidden fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+    <div id="custom-alert" class="hidden fixed top-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
         <p id="custom-alert-message"></p>
     </div>
 
     <!-- 6. 삭제 확인 모달 -->
-    <div id="delete-confirm-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div id="delete-confirm-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-lg p-8 shadow-xl w-full max-w-sm">
             <h2 class="text-lg font-bold mb-2">게시물 삭제</h2>
             <p id="delete-confirm-message" class="text-gray-600 mb-6"></p>
@@ -139,8 +153,6 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- 데이터 관리 ---
-        // 중요: 이 데이터는 페이지를 새로고침하면 초기화됩니다.
-        // 데이터를 영구적으로 저장하려면 Firebase, Supabase 같은 데이터베이스나 GitHub API를 연동해야 합니다.
         let posts = [
             { id: 1, title: "새로운 시작, 코딩 첫걸음", date: "2025-08-12", content: `<p>코딩의 세계에 오신 것을 환영합니다. 이 공간은 당신의 아이디어가 현실이 되는 곳입니다. 처음에는 모든 것이 낯설고 복잡하게 느껴질 수 있지만, 한 걸음씩 나아가다 보면 어느새 멋진 결과물을 만들어내는 자신을 발견하게 될 것입니다.</p><figure><img src="https://placehold.co/800x400/e2e8f0/334155?text=Code+Snippet" alt="Code Snippet Placeholder" class="rounded-lg shadow-md my-4"><figcaption class="text-center text-sm text-gray-500 mt-2">이곳에 이미지나 코드 블록을 넣을 수 있습니다.</figcaption></figure><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p><blockquote class="border-l-4 border-gray-900 pl-4 italic text-gray-600 my-4">"The only way to do great work is to love what you do." - Steve Jobs</blockquote>`, isPinned: true },
             { id: 2, title: "CSS 레이아웃의 모든 것", date: "2025-08-10", content: `<p>CSS 레이아웃은 웹 디자인의 뼈대를 만드는 중요한 기술입니다. Flexbox와 Grid에 대해 알아봅시다.</p>`, isPinned: false },
@@ -151,6 +163,8 @@
 
         // --- DOM 요소 ---
         const mainContainer = document.getElementById('main-container');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
         const openEditorBtn = document.getElementById('open-editor-btn');
         const passwordModal = document.getElementById('password-modal');
         const passwordForm = document.getElementById('password-form');
@@ -177,8 +191,12 @@
         // --- 렌더링 함수 ---
         function renderBlog() {
             mainContainer.innerHTML = '';
+            
+            // 왼쪽 패널 (Aside) 생성
             const aside = document.createElement('aside');
-            aside.className = "w-1/3 bg-gray-50 h-screen overflow-y-auto p-6";
+            aside.id = 'aside-menu';
+            // 모바일에서는 화면 밖에 숨겨두고, 데스크톱에서는 보이도록 클래스 설정
+            aside.className = "fixed top-0 left-0 w-4/5 max-w-sm md:w-1/3 bg-gray-50 h-full overflow-y-auto p-6 transform -translate-x-full md:relative md:translate-x-0 md:h-auto z-40";
             
             const ul = document.createElement('ul');
             ul.className = 'space-y-1';
@@ -196,9 +214,12 @@
             
             aside.appendChild(ul);
 
+            // 오른쪽 패널 (Main) 생성
             const main = document.createElement('main');
-            main.className = "w-2/3 h-screen overflow-y-auto p-8 md:p-12";
+            // 모바일에서는 전체 너비, 데스크톱에서는 2/3 너비
+            main.className = "w-full md:w-2/3 h-full overflow-y-auto p-8 md:p-12";
             main.innerHTML = `<div id="post-content-wrapper"></div>`;
+            
             mainContainer.appendChild(aside);
             mainContainer.appendChild(main);
 
@@ -215,7 +236,9 @@
             const post = posts.find(p => p.id === postId);
             if (!post) return;
             const wrapper = document.getElementById('post-content-wrapper');
-            wrapper.innerHTML = `<article class="max-w-3xl mx-auto"><h3 class="text-4xl font-bold text-gray-900 mb-4">${post.title}</h3><p class="text-gray-500 mb-8">${new Date(post.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p><div class="space-y-6 text-lg leading-relaxed text-gray-700">${post.content}</div></article>`;
+            if(wrapper) {
+                wrapper.innerHTML = `<article class="max-w-3xl mx-auto"><h3 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h3><p class="text-gray-500 mb-8">${new Date(post.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p><div class="space-y-6 text-lg leading-relaxed text-gray-700">${post.content}</div></article>`;
+            }
         }
         
         function highlightActiveLink(postId) {
@@ -228,6 +251,7 @@
             });
         }
 
+        // --- 이벤트 핸들러 ---
         mainContainer.addEventListener('click', (e) => {
             if (e.target.closest('.post-link')) {
                 e.preventDefault();
@@ -235,6 +259,10 @@
                 const postId = parseInt(link.dataset.id);
                 renderPostContent(postId);
                 highlightActiveLink(postId);
+                // 모바일에서 링크 클릭 시 메뉴 닫기
+                if (window.innerWidth < 768) {
+                    toggleMobileMenu(false);
+                }
             }
         });
 
@@ -245,6 +273,20 @@
             customAlert.classList.remove('hidden');
             setTimeout(() => customAlert.classList.add('hidden'), 3000);
         }
+        
+        // 모바일 메뉴 토글
+        function toggleMobileMenu(show) {
+            const asideMenu = document.getElementById('aside-menu');
+            if (show) {
+                mobileMenuOverlay.classList.remove('hidden');
+                asideMenu.classList.remove('-translate-x-full');
+            } else {
+                mobileMenuOverlay.classList.add('hidden');
+                asideMenu.classList.add('-translate-x-full');
+            }
+        }
+        mobileMenuBtn.addEventListener('click', () => toggleMobileMenu(true));
+        mobileMenuOverlay.addEventListener('click', () => toggleMobileMenu(false));
 
         openEditorBtn.addEventListener('click', () => {
             passwordModal.classList.remove('hidden');
@@ -401,6 +443,7 @@
             loadPostInEditor(savedPostId);
         });
 
+        // --- 초기화 ---
         renderBlog();
     });
     </script>
