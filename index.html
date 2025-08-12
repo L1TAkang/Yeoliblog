@@ -92,7 +92,7 @@
                 <button id="editor-close-btn" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
             </div>
             <div class="flex-grow flex flex-col md:flex-row min-h-0">
-                <div class="w-full md:w-1/4 border-b md:border-b-0 md:border-r flex flex-col bg-gray-50">
+                <div class="w-full md:w-1/3 lg:w-1/4 border-b md:border-b-0 md:border-r flex flex-col bg-gray-50">
                     <div id="editor-post-list" class="flex-grow overflow-y-auto p-4"></div>
                     <div class="p-4 border-t">
                         <button id="add-new-post-btn" class="w-full flex items-center justify-center px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800">
@@ -101,7 +101,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="w-full md:w-3/4 flex flex-col p-4 overflow-y-auto">
+                <div class="w-full md:w-2/3 lg:w-3/4 flex flex-col p-4 overflow-y-auto">
                     <div class="mb-4">
                         <label for="editor-title" class="block text-sm font-medium text-gray-700">제목</label>
                         <input type="text" id="editor-title" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
@@ -195,8 +195,8 @@
             // 왼쪽 패널 (Aside) 생성
             const aside = document.createElement('aside');
             aside.id = 'aside-menu';
-            // 모바일에서는 화면 밖에 숨겨두고, 데스크톱에서는 보이도록 클래스 설정
-            aside.className = "fixed top-0 left-0 w-4/5 max-w-sm md:w-1/3 bg-gray-50 h-full overflow-y-auto p-6 transform -translate-x-full md:relative md:translate-x-0 md:h-auto z-40";
+            // 모바일: 숨김, 태블릿: 1/3 너비, 데스크톱: 고정 너비(384px)
+            aside.className = "fixed top-0 left-0 w-4/5 max-w-sm md:w-1/3 lg:w-96 bg-gray-50 h-full overflow-y-auto p-6 transform -translate-x-full md:relative md:translate-x-0 md:h-auto z-40 flex-shrink-0";
             
             const ul = document.createElement('ul');
             ul.className = 'space-y-1';
@@ -207,7 +207,7 @@
                 sortedPosts.forEach(post => {
                     const li = document.createElement('li');
                     const pinIconHTML = post.isPinned ? `<div class="w-5 text-center mr-2 flex-shrink-0 text-gray-400">📌</div>` : '<div class="w-5 mr-2 flex-shrink-0"></div>';
-                    li.innerHTML = `<a href="#post-${post.id}" data-id="${post.id}" class="post-link flex items-center p-3 rounded-lg hover:bg-white hover:shadow-sm transition-all">${pinIconHTML}<span class="flex-1">${post.title}</span></a>`;
+                    li.innerHTML = `<a href="#post-${post.id}" data-id="${post.id}" class="post-link flex items-center p-3 rounded-lg hover:bg-white hover:shadow-sm transition-all">${pinIconHTML}<span class="flex-1 truncate">${post.title}</span></a>`;
                     ul.appendChild(li);
                 });
             }
@@ -216,8 +216,8 @@
 
             // 오른쪽 패널 (Main) 생성
             const main = document.createElement('main');
-            // 모바일에서는 전체 너비, 데스크톱에서는 2/3 너비
-            main.className = "w-full md:w-2/3 h-full overflow-y-auto p-8 md:p-12";
+            // 남은 공간을 모두 차지하도록 flex-grow 사용
+            main.className = "w-full md:flex-grow h-full overflow-y-auto p-8 md:p-12";
             main.innerHTML = `<div id="post-content-wrapper"></div>`;
             
             mainContainer.appendChild(aside);
@@ -337,7 +337,7 @@
             const sortedPosts = [...posts].sort((a, b) => b.isPinned - a.isPinned);
             sortedPosts.forEach(post => {
                 const li = document.createElement('li');
-                li.innerHTML = `<a href="#" data-id="${post.id}" class="editor-post-link block p-2 rounded-md hover:bg-gray-200">${post.title}</a>`;
+                li.innerHTML = `<a href="#" data-id="${post.id}" class="editor-post-link block p-2 rounded-md hover:bg-gray-200 truncate">${post.title}</a>`;
                 ul.appendChild(li);
             });
             editorPostList.appendChild(ul);
