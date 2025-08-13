@@ -31,7 +31,7 @@
 
         /* 편집기와 본문의 공통 스타일 */
         .content-body, .editor-content {
-            font-size: 16px;
+            font-size: 18px; /* 기본 폰트 크기를 18px로 고정 */
             line-height: 1.6;
         }
         .content-body h2, .content-body h3, .content-body h4,
@@ -167,11 +167,6 @@
                             <select id="font-family-select" class="toolbar-select">
                                 <option value="Pretendard, sans-serif">Pretendard</option>
                                 <option value="Noto Serif KR, serif">Noto Serif KR</option>
-                            </select>
-                            <select id="font-size-select" class="toolbar-select">
-                                <option value="16px">16px (작게)</option>
-                                <option value="20px" selected>20px (보통)</option>
-                                <option value="24px">24px (크게)</option>
                             </select>
                              <select id="line-height-select" class="toolbar-select">
                                 <option value="1.2">줄간격 1.2</option>
@@ -315,7 +310,6 @@
         const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
         const deleteCancelBtn = document.getElementById('delete-cancel-btn');
         const fontFamilySelect = document.getElementById('font-family-select');
-        const fontSizeSelect = document.getElementById('font-size-select');
         const lineHeightSelect = document.getElementById('line-height-select');
         const fontColorPicker = document.getElementById('font-color-picker');
 
@@ -517,7 +511,7 @@
                 if (a.isPinned !== b.isPinned) return b.isPinned - a.isPinned;
                 const dateA = a.updatedAt || a.createdAt;
                 const dateB = b.updatedAt || b.createdAt;
-                return dateB - dateA; // 수정된 부분
+                return dateB - dateA;
             });
 
             if (sortedPosts.length > 0) {
@@ -602,15 +596,14 @@
             tempBannerUrl = null;
             editorTitle.value = "새로운 게시물";
             
-            // '새 게시물' 버튼 클릭 시, 발행일을 오늘 날짜로 설정합니다.
             const today = new Date();
             const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+            const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
-            editorDate.value = `${year}-${month}-${day}`; // YYYY-MM-DD 형식으로 설정
+            editorDate.value = `${year}-${month}-${day}`;
 
             editorPinToggle.checked = false;
-            editorContent.innerHTML = "<p style='font-size: 20px;'>여기에 내용을 입력하세요.</p>"; // 기본 폰트 크기 설정
+            editorContent.innerHTML = "<p>여기에 내용을 입력하세요.</p>";
             editorSaveBtn.textContent = "게시물 발행";
             updateBannerButtons();
             
@@ -620,27 +613,20 @@
             editorTitle.focus();
         }
         
-        // --- 툴바 로직 (전면 수정) ---
+        // --- 툴바 로직 ---
 
-        // 툴바 버튼 클릭 이벤트 리스너
         editorToolbar.addEventListener('click', (e) => {
             const button = e.target.closest('button');
             if (button && button.dataset.command) {
                 e.preventDefault();
-                const command = button.dataset.command;
-                const value = button.dataset.value || null;
-                applyStyle(command, value);
+                applyStyle(button.dataset.command, button.dataset.value || null);
             }
         });
 
-        // 툴바 셀렉트 박스/컬러 피커 변경 이벤트 리스너
         fontFamilySelect.addEventListener('change', (e) => applyStyle('fontFamily', e.target.value));
-        fontSizeSelect.addEventListener('change', (e) => applyStyle('fontSize', e.target.value));
         lineHeightSelect.addEventListener('change', (e) => applyStyle('lineHeight', e.target.value));
         fontColorPicker.addEventListener('input', (e) => applyStyle('foreColor', e.target.value));
 
-        // 에디터에서 포커스를 잃을 때(blur), 현재 선택 영역을 저장합니다.
-        // 툴바의 요소(버튼, 셀렉트 등)를 클릭하는 경우에만 저장해야 합니다.
         editorContent.addEventListener('blur', (e) => {
             if (editorToolbar.contains(e.relatedTarget)) {
                 const selection = window.getSelection();
@@ -652,66 +638,46 @@
             }
         });
 
-        // 통합 스타일 적용 함수
         function applyStyle(command, value = null) {
-            editorContent.focus(); // 에디터에 포커스를 맞춥니다.
-
-            // blur 이벤트에서 저장해둔 선택 영역이 있다면 복원합니다.
+            editorContent.focus();
             if (savedRange) {
                 const selection = window.getSelection();
                 selection.removeAllRanges();
                 selection.addRange(savedRange);
             }
 
-            // 명령어에 따라 분기하여 처리합니다.
             switch (command) {
                 case 'bold':
                 case 'italic':
                 case 'insertHorizontalRule':
                 case 'foreColor':
-                    // 간단한 명령어는 execCommand를 그대로 사용합니다.
                     document.execCommand(command, false, value);
                     break;
                 
                 case 'formatBlock':
-                    // 블록 포맷(H2, H3 등)은 토글 로직을 적용합니다.
                     let parentNode = window.getSelection().anchorNode;
-                    if (parentNode && parentNode.nodeType !== 1) {
-                        parentNode = parentNode.parentNode;
-                    }
+                    if (parentNode && parentNode.nodeType !== 1) parentNode = parentNode.parentNode;
                     const effectiveNode = parentNode.closest('h2, h3, h4, blockquote');
-                    
                     if (effectiveNode && effectiveNode.tagName.toLowerCase() === value) {
-                        // 이미 적용된 스타일이면 P 태그(일반)로 변경합니다.
                         document.execCommand('formatBlock', false, 'p');
                     } else {
-                        // 새로운 스타일을 적용합니다.
                         document.execCommand(command, false, value);
                     }
                     break;
 
                 case 'fontFamily':
-                    // 폰트 종류는 'font-family' 스타일을 가진 span으로 감싸서 처리합니다.
                     wrapWithSpan({ 'font-family': value });
-                    break;
-                case 'fontSize':
-                     // 폰트 크기는 'font-size' 스타일을 가진 span으로 감싸서 처리합니다.
-                    wrapWithSpan({ 'font-size': value });
                     break;
                 
                 case 'lineHeight':
-                    // 줄 간격은 선택 영역의 부모 블록 요소(P, H2 등)에 직접 적용합니다.
                     applyBlockStyle({ 'line-height': value });
                     break;
             }
 
-            savedRange = null; // 사용한 선택 영역은 초기화합니다.
-            updateToolbarState(); // 툴바의 버튼 상태를 업데이트합니다.
+            savedRange = null;
+            updateToolbarState();
         }
 
-        // --- 툴바 스타일 적용 헬퍼 함수 (수정됨) ---
-
-        // 노드를 감싸고 있는 부모를 제거하고 자식 노드들만 남기는 함수
         function unwrapNode(node) {
             const parent = node.parentNode;
             if (!parent) return;
@@ -721,74 +687,49 @@
             parent.removeChild(node);
         }
 
-        // 노드와 그 자식들을 재귀적으로 순회하며 특정 스타일 속성을 가진 span을 제거하는 함수
         function cleanNodeRecursively(node, styleProperty) {
-            if (node.nodeType !== 1) return; // 요소 노드만 처리
-
-            // 자식 노드들을 먼저 처리 (후위 순회)
-            //childNodes가 실시간으로 변경되므로 배열로 복사해서 사용
+            if (node.nodeType !== 1) return;
             const children = Array.from(node.childNodes);
             for (const child of children) {
                 cleanNodeRecursively(child, styleProperty);
             }
-
-            // 현재 노드 처리
             if (node.tagName === 'SPAN' && node.style[styleProperty]) {
-                node.style[styleProperty] = ''; // 특정 스타일 속성 제거
-                if (!node.style.cssText) { // style 속성이 비었으면
-                    unwrapNode(node); // span 태그를 제거
+                node.style[styleProperty] = '';
+                if (!node.style.cssText) {
+                    unwrapNode(node);
                 }
             }
         }
 
-        // 선택 영역을 span으로 감싸고 스타일을 적용하는 함수 (수정됨)
         function wrapWithSpan(styles) {
             const selection = window.getSelection();
             if (!selection.rangeCount || selection.isCollapsed) return;
-
             const range = selection.getRangeAt(0);
             const styleProperty = Object.keys(styles)[0];
-            
             const selectedFragment = range.extractContents();
-            
-            // 감싸기 전에 기존에 있던 동일한 종류의 스타일을 먼저 제거
             cleanNodeRecursively(selectedFragment, styleProperty);
-
             const span = document.createElement('span');
             Object.assign(span.style, styles);
-
             span.appendChild(selectedFragment);
             range.insertNode(span);
-
-            // 새로 삽입된 내용을 다시 선택
             selection.removeAllRanges();
             const newRange = document.createRange();
             newRange.selectNodeContents(span);
             selection.addRange(newRange);
         }
 
-        // 선택 영역의 부모 블록 요소에 스타일을 적용하는 함수
         function applyBlockStyle(styles) {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
-
             const range = selection.getRangeAt(0);
             let parent = range.commonAncestorContainer;
-
-            // 컨테이너가 텍스트 노드인 경우, 부모 요소로 한 단계 올라갑니다.
-            if (parent.nodeType !== 1) {
-                parent = parent.parentNode;
-            }
-
-            // 가장 가까운 블록 레벨 요소를 찾습니다.
+            if (parent.nodeType !== 1) parent = parent.parentNode;
             const blockElement = parent.closest('p, h2, h3, h4, div');
             if (blockElement) {
-                // 찾은 블록 요소에 스타일을 적용합니다.
                 Object.assign(blockElement.style, styles);
             }
         }
 
-        // --- 툴바 상태 업데이트 로직 ---
         document.addEventListener('selectionchange', () => {
             if (document.activeElement === editorContent) {
                  updateToolbarState();
@@ -796,24 +737,15 @@
         });
 
         function updateToolbarState() {
-            // bold, italic 같은 기본 명령어 상태 업데이트
             ['bold', 'italic'].forEach(command => {
                 const button = editorToolbar.querySelector(`[data-command="${command}"]`);
-                if (button) {
-                    button.classList.toggle('active', document.queryCommandState(command));
-                }
+                if (button) button.classList.toggle('active', document.queryCommandState(command));
             });
-
-            // h2, h3, blockquote 같은 블록 명령어 상태 업데이트
             let parentNode = window.getSelection().anchorNode;
-            if (parentNode && parentNode.nodeType !== 1) {
-                parentNode = parentNode.parentNode;
-            }
-            
+            if (parentNode && parentNode.nodeType !== 1) parentNode = parentNode.parentNode;
             if (parentNode) {
                 editorToolbar.querySelectorAll('[data-command="formatBlock"]').forEach(button => {
                     const tag = button.dataset.value;
-                    // 현재 커서 위치에서 가장 가까운 상위 요소가 버튼의 태그와 일치하는지 확인
                     button.classList.toggle('active', !!parentNode.closest(tag));
                 });
             }
@@ -833,13 +765,12 @@
         
         deleteConfirmBtn.addEventListener('click', async () => {
             if (currentEditingPostId === null) return;
-            
             try {
                 await deleteDoc(doc(db, "posts", currentEditingPostId));
                 deleteConfirmModal.classList.add('hidden');
                 showAlert("게시물이 삭제되었습니다.");
                 startNewPost();
-                renderBlog(); // 삭제 후 블로그 렌더링
+                renderBlog();
             } catch (error) {
                 console.error("삭제 오류: ", error);
                 showAlert("게시물 삭제에 실패했습니다.", true);
@@ -877,7 +808,7 @@
                     await updateDoc(postRef, postData);
                     showAlert("게시물이 성공적으로 수정되었습니다.");
                 }
-                renderBlog(); // 저장 후 블로그 렌더링
+                renderBlog();
             } catch (error) {
                 console.error("저장 오류: ", error);
                 showAlert("저장에 실패했습니다.", true);
