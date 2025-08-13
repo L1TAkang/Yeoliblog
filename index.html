@@ -31,7 +31,7 @@
 
         /* 편집기와 본문의 공통 스타일 */
         .content-body, .editor-content {
-            font-size: 18px; /* 기본 폰트 크기를 18px로 고정 */
+            font-size: 16px; /* 기본 폰트 크기를 16px로 고정 */
             line-height: 1.6;
         }
         .content-body h2, .content-body h3, .content-body h4,
@@ -168,6 +168,8 @@
                                 <option value="Pretendard, sans-serif">Pretendard</option>
                                 <option value="Noto Serif KR, serif">Noto Serif KR</option>
                             </select>
+                            <button data-command="setGlobalFontSize" data-value="16px" class="toolbar-btn">16px</button>
+                            <button data-command="setGlobalFontSize" data-value="18px" class="toolbar-btn">18px</button>
                              <select id="line-height-select" class="toolbar-select">
                                 <option value="1.2">줄간격 1.2</option>
                                 <option value="1.4">줄간격 1.4</option>
@@ -580,6 +582,8 @@
             editorContent.innerHTML = post.content;
             editorSaveBtn.textContent = "수정 완료";
             updateBannerButtons();
+            editorContent.style.fontSize = '16px'; // 에디터 열 때 기본값으로 리셋
+            updateToolbarState();
             
             document.querySelectorAll('.editor-post-link').forEach(link => {
                 link.classList.toggle('bg-gray-300', link.dataset.id === postId);
@@ -606,6 +610,8 @@
             editorContent.innerHTML = "<p>여기에 내용을 입력하세요.</p>";
             editorSaveBtn.textContent = "게시물 발행";
             updateBannerButtons();
+            editorContent.style.fontSize = '16px'; // 새 글 작성 시 기본값으로 리셋
+            updateToolbarState();
             
             document.querySelectorAll('.editor-post-link').forEach(link => {
                 link.classList.remove('bg-gray-300', 'font-semibold');
@@ -619,7 +625,14 @@
             const button = e.target.closest('button');
             if (button && button.dataset.command) {
                 e.preventDefault();
-                applyStyle(button.dataset.command, button.dataset.value || null);
+                const command = button.dataset.command;
+                const value = button.dataset.value || null;
+                
+                if (command === 'setGlobalFontSize') {
+                    setGlobalFontSize(value);
+                } else {
+                    applyStyle(command, value);
+                }
             }
         });
 
@@ -637,6 +650,11 @@
                 savedRange = null;
             }
         });
+
+        function setGlobalFontSize(size) {
+            editorContent.style.fontSize = size;
+            updateToolbarState();
+        }
 
         function applyStyle(command, value = null) {
             editorContent.focus();
@@ -749,6 +767,11 @@
                     button.classList.toggle('active', !!parentNode.closest(tag));
                 });
             }
+            
+            const currentSize = editorContent.style.fontSize || '16px';
+            editorToolbar.querySelectorAll('[data-command="setGlobalFontSize"]').forEach(button => {
+                button.classList.toggle('active', button.dataset.value === currentSize);
+            });
         }
 
         // --- Firestore 데이터 수정/삭제 ---
