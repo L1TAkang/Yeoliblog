@@ -700,6 +700,17 @@
         });
 
         function setGlobalFontSize(size) {
+            // 에디터 내의 모든 요소에서 기존 font-size 스타일을 제거합니다.
+            const allElements = editorContent.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (el.style.fontSize) {
+                    el.style.removeProperty('font-size');
+                }
+                if (el.getAttribute('style') === '') {
+                    el.removeAttribute('style');
+                }
+            });
+            // 에디터 컨테이너에만 font-size를 적용합니다.
             editorContent.style.fontSize = size;
             updateToolbarState();
         }
@@ -861,6 +872,17 @@
 
         editorSaveBtn.addEventListener('click', async () => {
             try {
+                 // 저장하기 전에 내부 폰트 스타일 정리
+                const allElements = editorContent.querySelectorAll('*');
+                allElements.forEach(el => {
+                    if (el.style.fontSize) {
+                        el.style.removeProperty('font-size');
+                    }
+                    if (el.getAttribute('style') === '') {
+                        el.removeAttribute('style');
+                    }
+                });
+
                 const postData = {
                     title: editorTitle.value,
                     date: editorDate.value,
