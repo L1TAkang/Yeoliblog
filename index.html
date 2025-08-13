@@ -69,6 +69,45 @@
             margin: 1.25em 0;
         }
 
+        /* 코드 블록 스타일 */
+        .code-block-wrapper {
+            position: relative;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            font-family: monospace;
+        }
+        .code-block-wrapper pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 200px; /* 코드 블록 최대 높이 (약 3cm) */
+            overflow-y: auto; /* 내용이 길면 스크롤 생성 */
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db #f3f4f6;
+        }
+        .code-block-wrapper pre::-webkit-scrollbar { width: 8px; }
+        .code-block-wrapper pre::-webkit-scrollbar-track { background: #f3f4f6; }
+        .code-block-wrapper pre::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
+        .copy-code-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #d1d5db;
+            color: #1f2937;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .code-block-wrapper:hover .copy-code-btn {
+            opacity: 1;
+        }
+
+
         /* 툴바 스타일 */
         .toolbar-btn {
             padding: 0.25rem 0.5rem;
@@ -168,8 +207,8 @@
                                 <option value="Pretendard, sans-serif">Pretendard</option>
                                 <option value="Noto Serif KR, serif">Noto Serif KR</option>
                             </select>
-                            <button data-command="setGlobalFontSize" data-value="16px" class="toolbar-btn">16px</button>
-                            <button data-command="setGlobalFontSize" data-value="18px" class="toolbar-btn">18px</button>
+                            <button data-command="setGlobalFontSize" data-value="16px" class="toolbar-btn">기본</button>
+                            <button data-command="setGlobalFontSize" data-value="20px" class="toolbar-btn">크게</button>
                              <select id="line-height-select" class="toolbar-select">
                                 <option value="1.2">줄간격 1.2</option>
                                 <option value="1.4">줄간격 1.4</option>
@@ -185,6 +224,11 @@
                             <button data-command="formatBlock" data-value="h4" class="toolbar-btn text-sm font-bold">H4</button>
                             <div class="w-px h-5 bg-gray-300"></div>
                             <button data-command="formatBlock" data-value="blockquote" class="toolbar-btn text-gray-500 text-lg">“ ”</button>
+                            <button data-command="insertCodeBlock" class="toolbar-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                </svg>
+                            </button>
                             <button data-command="insertHorizontalRule" class="toolbar-btn text-gray-500">-</button>
                         </div>
                         <div id="editor-content" contenteditable="true" class="flex-grow border border-gray-300 rounded-b-md p-2 overflow-y-auto editor-content"></div>
@@ -456,7 +500,8 @@
             if(wrapper) {
                 const bannerHTML = post.bannerUrl ? `<img src="${post.bannerUrl}" alt="Banner Image" class="banner-image mb-8 rounded-lg">` : '';
                 const dividerHTML = `<hr class="my-6 border-gray-200">`;
-                wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h2><p class="text-gray-500 mb-6">${post.date}</p>${dividerHTML}<div class="content-body leading-relaxed text-gray-700">${post.content}</div></article>`;
+                const fontSizeStyle = `font-size: ${post.fontSize || '16px'};`; // 저장된 폰트 크기 적용
+                wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h2><p class="text-gray-500 mb-6">${post.date}</p>${dividerHTML}<div class="content-body leading-relaxed text-gray-700" style="${fontSizeStyle}">${post.content}</div></article>`;
             }
         }
         
@@ -582,7 +627,7 @@
             editorContent.innerHTML = post.content;
             editorSaveBtn.textContent = "수정 완료";
             updateBannerButtons();
-            editorContent.style.fontSize = '16px'; // 에디터 열 때 기본값으로 리셋
+            editorContent.style.fontSize = post.fontSize || '16px'; // 저장된 폰트 크기 적용
             updateToolbarState();
             
             document.querySelectorAll('.editor-post-link').forEach(link => {
@@ -630,7 +675,10 @@
                 
                 if (command === 'setGlobalFontSize') {
                     setGlobalFontSize(value);
-                } else {
+                } else if (command === 'insertCodeBlock') {
+                    insertCodeBlock();
+                }
+                else {
                     applyStyle(command, value);
                 }
             }
@@ -654,6 +702,17 @@
         function setGlobalFontSize(size) {
             editorContent.style.fontSize = size;
             updateToolbarState();
+        }
+
+        function insertCodeBlock() {
+            const codeBlockHTML = `
+                <div class="code-block-wrapper" contenteditable="false">
+                    <button class="copy-code-btn">복사</button>
+                    <pre contenteditable="true" spellcheck="false">코드를 여기에 붙여넣으세요.</pre>
+                </div>
+            `;
+            // 현재 커서 위치에 코드 블록을 삽입합니다.
+            document.execCommand('insertHTML', false, codeBlockHTML + '<p><br></p>');
         }
 
         function applyStyle(command, value = null) {
@@ -802,15 +861,17 @@
 
         editorSaveBtn.addEventListener('click', async () => {
             try {
+                const postData = {
+                    title: editorTitle.value,
+                    date: editorDate.value,
+                    content: editorContent.innerHTML,
+                    isPinned: editorPinToggle.checked,
+                    bannerUrl: tempBannerUrl,
+                    fontSize: editorContent.style.fontSize || '16px' // 폰트 크기 저장
+                };
+
                 if (isCreatingNewPost) {
-                    const postData = {
-                        title: editorTitle.value,
-                        date: editorDate.value,
-                        content: editorContent.innerHTML,
-                        isPinned: editorPinToggle.checked,
-                        bannerUrl: tempBannerUrl,
-                        createdAt: serverTimestamp()
-                    };
+                    postData.createdAt = serverTimestamp();
                     const docRef = await addDoc(postsCollection, postData);
                     showAlert("새 게시물이 발행되었습니다.");
                     isCreatingNewPost = false;
@@ -819,15 +880,8 @@
                     editorDeleteBtn.disabled = false;
                 } else {
                     if (currentEditingPostId === null) return;
+                    postData.updatedAt = serverTimestamp();
                     const postRef = doc(db, "posts", currentEditingPostId);
-                    const postData = {
-                        title: editorTitle.value,
-                        date: editorDate.value,
-                        content: editorContent.innerHTML,
-                        isPinned: editorPinToggle.checked,
-                        bannerUrl: tempBannerUrl,
-                        updatedAt: serverTimestamp()
-                    };
                     await updateDoc(postRef, postData);
                     showAlert("게시물이 성공적으로 수정되었습니다.");
                 }
@@ -923,6 +977,27 @@
         unsplashSearchBtn.addEventListener('click', () => searchUnsplash(unsplashSearchInput.value));
         unsplashSearchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') searchUnsplash(e.target.value);
+        });
+
+        // 코드 복사 이벤트 리스너 (이벤트 위임 사용)
+        document.body.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-code-btn')) {
+                const wrapper = e.target.closest('.code-block-wrapper');
+                const codeToCopy = wrapper.querySelector('pre').innerText;
+                
+                // 임시 textarea를 사용하여 복사
+                const textarea = document.createElement('textarea');
+                textarea.value = codeToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+
+                e.target.textContent = '복사 완료!';
+                setTimeout(() => {
+                    e.target.textContent = '복사';
+                }, 2000);
+            }
         });
         
     </script>
