@@ -613,109 +613,30 @@
             editorTitle.focus();
         }
         
-        // --- 툴바 로직 (수정됨) ---
-        function applyStyle(command, value = null) {
-            editorContent.focus();
-            
-            // 'formatBlock' (H2, H3, blockquote 등) 명령에 대한 토글 로직 추가
-            if (command === 'formatBlock') {
-                // 현재 선택된 노드의 부모 요소를 찾습니다.
-                let parentNode = window.getSelection().anchorNode;
-                if (parentNode && parentNode.nodeType !== 1) {
-                    parentNode = parentNode.parentNode;
-                }
+        // --- 툴바 로직 (전면 수정) ---
 
-                // 현재 블록이 이미 해당 스타일(value)로 지정되어 있는지 확인합니다.
-                if (parentNode && parentNode.closest(value)) {
-                    // 이미 적용된 상태라면, 일반 단락('p')으로 변경하여 스타일을 해제합니다.
-                    document.execCommand('formatBlock', false, 'p');
-                } else {
-                    // 적용되지 않은 상태라면, 요청된 스타일을 적용합니다.
-                    document.execCommand(command, false, value);
-                }
-            } else {
-                // 'bold', 'italic' 등 다른 명령은 기존 방식대로 실행합니다.
-                document.execCommand(command, false, value);
-            }
-
-            updateToolbarState();
-        }
-
-        function applySpanStyle(styleProperty, value) {
-            editorContent.focus();
-             if (savedRange) {
-                window.getSelection().removeAllRanges();
-                window.getSelection().addRange(savedRange);
-            }
-            document.execCommand("styleWithCSS", false, true);
-            
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                 if (range.collapsed) {
-                    const span = document.createElement('span');
-                    span.style[styleProperty] = value;
-                    span.innerHTML = '&#8203;'; // Zero-width space
-                    range.insertNode(span);
-                    range.setStart(span, 1);
-                    range.collapse(true);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                    return;
-                }
-
-                const selectedElements = getSelectedElements(selection);
-                selectedElements.forEach(el => {
-                    el.style[styleProperty] = value;
-                });
-            }
-            document.execCommand("styleWithCSS", false, false);
-        }
-
-        function getSelectedElements(selection) {
-            const elements = [];
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                let node = range.startContainer;
-                const endNode = range.endContainer;
-
-                while (node) {
-                    if (node.nodeType === 1 && selection.containsNode(node, true)) {
-                        elements.push(node);
-                    }
-                    if (node === endNode) break;
-                    node = getNextNode(node);
-                }
-            }
-            return elements;
-        }
-
-        function getNextNode(node) {
-            if (node.firstChild) return node.firstChild;
-            while (node) {
-                if (node.nextSibling) return node.nextSibling;
-                node = node.parentNode;
-            }
-            return null;
-        }
-        
+        // 툴바 버튼 클릭 이벤트 리스너
         editorToolbar.addEventListener('click', (e) => {
-            const target = e.target.closest('button');
-            if (target && target.dataset.command) {
+            const button = e.target.closest('button');
+            if (button && button.dataset.command) {
                 e.preventDefault();
-                applyStyle(target.dataset.command, target.dataset.value || null);
+                const command = button.dataset.command;
+                const value = button.dataset.value || null;
+                applyStyle(command, value);
             }
         });
 
-        fontFamilySelect.addEventListener('change', (e) => applySpanStyle('fontFamily', e.target.value));
-        fontSizeSelect.addEventListener('change', (e) => applySpanStyle('fontSize', e.target.value));
+        // 툴바 셀렉트 박스/컬러 피커 변경 이벤트 리스너
+        fontFamilySelect.addEventListener('change', (e) => applyStyle('fontFamily', e.target.value));
+        fontSizeSelect.addEventListener('change', (e) => applyStyle('fontSize', e.target.value));
+        lineHeightSelect.addEventListener('change', (e) => applyStyle('lineHeight', e.target.value));
         fontColorPicker.addEventListener('input', (e) => applyStyle('foreColor', e.target.value));
-        lineHeightSelect.addEventListener('change', (e) => applySpanStyle('lineHeight', e.target.value));
 
+        // 에디터에서 포커스를 잃을 때(blur), 현재 선택 영역을 저장합니다.
+        // 툴바의 요소(버튼, 셀렉트 등)를 클릭하는 경우에만 저장해야 합니다.
         editorContent.addEventListener('blur', (e) => {
-            const selection = window.getSelection();
-            // 툴바의 요소를 클릭하는 경우에는 selection을 저장합니다.
             if (editorToolbar.contains(e.relatedTarget)) {
+                const selection = window.getSelection();
                 if (selection.rangeCount > 0) {
                     savedRange = selection.getRangeAt(0).cloneRange();
                 }
@@ -724,6 +645,107 @@
             }
         });
 
+        // 통합 스타일 적용 함수
+        function applyStyle(command, value = null) {
+            editorContent.focus(); // 에디터에 포커스를 맞춥니다.
+
+            // blur 이벤트에서 저장해둔 선택 영역이 있다면 복원합니다.
+            if (savedRange) {
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedRange);
+            }
+
+            // 명령어에 따라 분기하여 처리합니다.
+            switch (command) {
+                case 'bold':
+                case 'italic':
+                case 'insertHorizontalRule':
+                case 'foreColor':
+                    // 간단한 명령어는 execCommand를 그대로 사용합니다.
+                    document.execCommand(command, false, value);
+                    break;
+                
+                case 'formatBlock':
+                    // 블록 포맷(H2, H3 등)은 토글 로직을 적용합니다.
+                    let parentNode = window.getSelection().anchorNode;
+                    if (parentNode && parentNode.nodeType !== 1) {
+                        parentNode = parentNode.parentNode;
+                    }
+                    const effectiveNode = parentNode.closest('h2, h3, h4, blockquote');
+                    
+                    if (effectiveNode && effectiveNode.tagName.toLowerCase() === value) {
+                        // 이미 적용된 스타일이면 P 태그(일반)로 변경합니다.
+                        document.execCommand('formatBlock', false, 'p');
+                    } else {
+                        // 새로운 스타일을 적용합니다.
+                        document.execCommand(command, false, value);
+                    }
+                    break;
+
+                case 'fontFamily':
+                    // 폰트 종류는 'font-family' 스타일을 가진 span으로 감싸서 처리합니다.
+                    wrapWithSpan({ 'font-family': value });
+                    break;
+                case 'fontSize':
+                     // 폰트 크기는 'font-size' 스타일을 가진 span으로 감싸서 처리합니다.
+                    wrapWithSpan({ 'font-size': value });
+                    break;
+                
+                case 'lineHeight':
+                    // 줄 간격은 선택 영역의 부모 블록 요소(P, H2 등)에 직접 적용합니다.
+                    applyBlockStyle({ 'line-height': value });
+                    break;
+            }
+
+            savedRange = null; // 사용한 선택 영역은 초기화합니다.
+            updateToolbarState(); // 툴바의 버튼 상태를 업데이트합니다.
+        }
+
+        // 선택 영역을 span으로 감싸고 스타일을 적용하는 함수
+        function wrapWithSpan(styles) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) return;
+
+            const range = selection.getRangeAt(0);
+            const selectedFragment = range.extractContents(); // 선택된 부분을 문서에서 추출
+            
+            const span = document.createElement('span');
+            // styles 객체에 있는 모든 스타일을 span에 적용
+            Object.assign(span.style, styles);
+
+            span.appendChild(selectedFragment); // 추출한 내용을 span 안에 넣음
+            range.insertNode(span); // 스타일이 적용된 span을 원래 위치에 삽입
+
+            // 선택 영역을 새로 삽입된 내용으로 다시 설정
+            selection.removeAllRanges();
+            const newRange = document.createRange();
+            newRange.selectNode(span);
+            selection.addRange(newRange);
+        }
+
+        // 선택 영역의 부모 블록 요소에 스타일을 적용하는 함수
+        function applyBlockStyle(styles) {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
+            let parent = range.commonAncestorContainer;
+
+            // 컨테이너가 텍스트 노드인 경우, 부모 요소로 한 단계 올라갑니다.
+            if (parent.nodeType !== 1) {
+                parent = parent.parentNode;
+            }
+
+            // 가장 가까운 블록 레벨 요소를 찾습니다.
+            const blockElement = parent.closest('p, h2, h3, h4, div');
+            if (blockElement) {
+                // 찾은 블록 요소에 스타일을 적용합니다.
+                Object.assign(blockElement.style, styles);
+            }
+        }
+
+        // --- 툴바 상태 업데이트 로직 ---
         document.addEventListener('selectionchange', () => {
             if (document.activeElement === editorContent) {
                  updateToolbarState();
@@ -731,22 +753,27 @@
         });
 
         function updateToolbarState() {
-            ['bold', 'italic', 'insertUnorderedList'].forEach(command => {
+            // bold, italic 같은 기본 명령어 상태 업데이트
+            ['bold', 'italic'].forEach(command => {
                 const button = editorToolbar.querySelector(`[data-command="${command}"]`);
                 if (button) {
                     button.classList.toggle('active', document.queryCommandState(command));
                 }
             });
 
+            // h2, h3, blockquote 같은 블록 명령어 상태 업데이트
             let parentNode = window.getSelection().anchorNode;
             if (parentNode && parentNode.nodeType !== 1) {
                 parentNode = parentNode.parentNode;
             }
             
-            editorToolbar.querySelectorAll('[data-command="formatBlock"]').forEach(button => {
-                const tag = button.dataset.value;
-                button.classList.toggle('active', parentNode && parentNode.closest(tag));
-            });
+            if (parentNode) {
+                editorToolbar.querySelectorAll('[data-command="formatBlock"]').forEach(button => {
+                    const tag = button.dataset.value;
+                    // 현재 커서 위치에서 가장 가까운 상위 요소가 버튼의 태그와 일치하는지 확인
+                    button.classList.toggle('active', !!parentNode.closest(tag));
+                });
+            }
         }
 
         // --- Firestore 데이터 수정/삭제 ---
