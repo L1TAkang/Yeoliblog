@@ -31,7 +31,7 @@
 
         /* 편집기와 본문의 공통 스타일 */
         .content-body, .editor-content {
-            font-size: 16px; /* 기본 폰트 크기를 16px로 고정 */
+            font-size: 18px; /* 기본 폰트 크기를 18px로 고정 */
             line-height: 1.6;
         }
         .content-body h2, .content-body h3, .content-body h4,
@@ -207,7 +207,8 @@
                                 <option value="Pretendard, sans-serif">Pretendard</option>
                                 <option value="Noto Serif KR, serif">Noto Serif KR</option>
                             </select>
-                            <button data-command="setGlobalFontSize" data-value="16px" class="toolbar-btn">기본</button>
+                            <button data-command="setGlobalFontSize" data-value="16px" class="toolbar-btn">작게</button>
+                            <button data-command="setGlobalFontSize" data-value="18px" class="toolbar-btn">기본</button>
                             <button data-command="setGlobalFontSize" data-value="20px" class="toolbar-btn">크게</button>
                              <select id="line-height-select" class="toolbar-select">
                                 <option value="1.2">줄간격 1.2</option>
@@ -500,7 +501,7 @@
             if(wrapper) {
                 const bannerHTML = post.bannerUrl ? `<img src="${post.bannerUrl}" alt="Banner Image" class="banner-image mb-8 rounded-lg">` : '';
                 const dividerHTML = `<hr class="my-6 border-gray-200">`;
-                const fontSizeStyle = `font-size: ${post.fontSize || '16px'};`; // 저장된 폰트 크기 적용
+                const fontSizeStyle = `font-size: ${post.fontSize || '18px'};`; // 저장된 폰트 크기 적용 (기본값 18px)
                 wrapper.innerHTML = `<article class="max-w-3xl w-full mx-auto">${bannerHTML}<h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">${post.title}</h2><p class="text-gray-500 mb-6">${post.date}</p>${dividerHTML}<div class="content-body leading-relaxed text-gray-700" style="${fontSizeStyle}">${post.content}</div></article>`;
             }
         }
@@ -627,7 +628,7 @@
             editorContent.innerHTML = post.content;
             editorSaveBtn.textContent = "수정 완료";
             updateBannerButtons();
-            editorContent.style.fontSize = post.fontSize || '16px'; // 저장된 폰트 크기 적용
+            editorContent.style.fontSize = post.fontSize || '18px'; // 저장된 폰트 크기 적용
             updateToolbarState();
             
             document.querySelectorAll('.editor-post-link').forEach(link => {
@@ -655,7 +656,7 @@
             editorContent.innerHTML = "<p>여기에 내용을 입력하세요.</p>";
             editorSaveBtn.textContent = "게시물 발행";
             updateBannerButtons();
-            editorContent.style.fontSize = '16px'; // 새 글 작성 시 기본값으로 리셋
+            editorContent.style.fontSize = '18px'; // 새 글 작성 시 기본값으로 리셋
             updateToolbarState();
             
             document.querySelectorAll('.editor-post-link').forEach(link => {
@@ -838,7 +839,7 @@
                 });
             }
             
-            const currentSize = editorContent.style.fontSize || '16px';
+            const currentSize = editorContent.style.fontSize || '18px';
             editorToolbar.querySelectorAll('[data-command="setGlobalFontSize"]').forEach(button => {
                 button.classList.toggle('active', button.dataset.value === currentSize);
             });
@@ -889,7 +890,7 @@
                     content: editorContent.innerHTML,
                     isPinned: editorPinToggle.checked,
                     bannerUrl: tempBannerUrl,
-                    fontSize: editorContent.style.fontSize || '16px' // 폰트 크기 저장
+                    fontSize: editorContent.style.fontSize || '18px' // 폰트 크기 저장
                 };
 
                 if (isCreatingNewPost) {
