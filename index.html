@@ -515,9 +515,9 @@
             editorModal.classList.remove('hidden');
             const sortedPosts = [...posts].sort((a, b) => {
                 if (a.isPinned !== b.isPinned) return b.isPinned - a.isPinned;
-                 const dateA = a.updatedAt || a.createdAt;
+                const dateA = a.updatedAt || a.createdAt;
                 const dateB = b.updatedAt || b.createdAt;
-                return dateB - a.isPinned;
+                return dateB - dateA; // 수정된 부분
             });
 
             if (sortedPosts.length > 0) {
