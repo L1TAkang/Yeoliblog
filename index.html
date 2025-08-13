@@ -122,13 +122,55 @@
             padding: 0.1rem 0.25rem;
             font-size: 0.875rem;
         }
-        .toolbar-color-picker {
-            border: 1px solid #d1d5db;
-            border-radius: 0.25rem;
+        /* 새로운 색상 선택기 스타일 */
+        .color-picker-container {
+            position: relative;
+        }
+        .color-picker-button {
             width: 2rem;
             height: 2rem;
-            padding: 2px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .color-picker-button span {
+            display: block;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 0.125rem;
+        }
+        .color-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            padding: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .color-swatch-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.25rem;
+        }
+        .color-swatch {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        .other-color-btn {
+            width: 100%;
+            margin-top: 0.5rem;
+            padding: 0.25rem;
+            font-size: 0.875rem;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
         }
     </style>
 </head>
@@ -215,7 +257,22 @@
                                 <option value="1.4">줄간격 1.4</option>
                                 <option value="1.6" selected>줄간격 1.6</option>
                             </select>
-                            <input type="color" id="font-color-picker" class="toolbar-color-picker" value="#000000">
+                            <div class="color-picker-container">
+                                <button id="color-picker-btn" class="color-picker-button">
+                                    <span id="current-color-display" style="background-color: #000000;"></span>
+                                </button>
+                                <div id="color-dropdown" class="color-dropdown hidden">
+                                    <div class="color-swatch-grid">
+                                        <div class="color-swatch" style="background-color: #000000;" data-color="#000000"></div>
+                                        <div class="color-swatch" style="background-color: #808080;" data-color="#808080"></div>
+                                        <div class="color-swatch" style="background-color: #800000;" data-color="#800000"></div>
+                                        <div class="color-swatch" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                                        <div class="color-swatch" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                                    </div>
+                                    <button id="other-color-btn" class="other-color-btn">다른 색...</button>
+                                    <input type="color" id="native-color-picker" class="hidden" value="#000000">
+                                </div>
+                            </div>
                             <div class="w-px h-5 bg-gray-300"></div>
                             <button data-command="bold" class="toolbar-btn font-bold">B</button>
                             <button data-command="italic" class="toolbar-btn italic">I</button>
@@ -358,7 +415,11 @@
         const deleteCancelBtn = document.getElementById('delete-cancel-btn');
         const fontFamilySelect = document.getElementById('font-family-select');
         const lineHeightSelect = document.getElementById('line-height-select');
-        const fontColorPicker = document.getElementById('font-color-picker');
+        const colorPickerBtn = document.getElementById('color-picker-btn');
+        const colorDropdown = document.getElementById('color-dropdown');
+        const otherColorBtn = document.getElementById('other-color-btn');
+        const nativeColorPicker = document.getElementById('native-color-picker');
+        const currentColorDisplay = document.getElementById('current-color-display');
 
         // --- Firebase 인증 상태 리스너 ---
         onAuthStateChanged(auth, user => {
@@ -687,7 +748,38 @@
 
         fontFamilySelect.addEventListener('change', (e) => applyStyle('fontFamily', e.target.value));
         lineHeightSelect.addEventListener('change', (e) => applyStyle('lineHeight', e.target.value));
-        fontColorPicker.addEventListener('input', (e) => applyStyle('foreColor', e.target.value));
+        
+        // --- 색상 선택기 로직 ---
+        colorPickerBtn.addEventListener('click', () => {
+            colorDropdown.classList.toggle('hidden');
+        });
+
+        colorDropdown.addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-swatch')) {
+                const color = e.target.dataset.color;
+                applyStyle('foreColor', color);
+                currentColorDisplay.style.backgroundColor = color;
+                colorDropdown.classList.add('hidden');
+            }
+        });
+
+        otherColorBtn.addEventListener('click', () => {
+            nativeColorPicker.click();
+        });
+
+        nativeColorPicker.addEventListener('input', (e) => {
+            const color = e.target.value;
+            applyStyle('foreColor', color);
+            currentColorDisplay.style.backgroundColor = color;
+            colorDropdown.classList.add('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!colorPickerBtn.contains(e.target) && !colorDropdown.contains(e.target)) {
+                colorDropdown.classList.add('hidden');
+            }
+        });
+
 
         editorContent.addEventListener('blur', (e) => {
             if (editorToolbar.contains(e.relatedTarget)) {
