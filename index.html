@@ -517,7 +517,7 @@
                 if (a.isPinned !== b.isPinned) return b.isPinned - a.isPinned;
                  const dateA = a.updatedAt || a.createdAt;
                 const dateB = b.updatedAt || b.createdAt;
-                return dateB - dateA;
+                return dateB - a.isPinned;
             });
 
             if (sortedPosts.length > 0) {
@@ -613,10 +613,31 @@
             editorTitle.focus();
         }
         
-        // --- 툴바 로직 (기존과 동일) ---
+        // --- 툴바 로직 (수정됨) ---
         function applyStyle(command, value = null) {
             editorContent.focus();
-            document.execCommand(command, false, value);
+            
+            // 'formatBlock' (H2, H3, blockquote 등) 명령에 대한 토글 로직 추가
+            if (command === 'formatBlock') {
+                // 현재 선택된 노드의 부모 요소를 찾습니다.
+                let parentNode = window.getSelection().anchorNode;
+                if (parentNode && parentNode.nodeType !== 1) {
+                    parentNode = parentNode.parentNode;
+                }
+
+                // 현재 블록이 이미 해당 스타일(value)로 지정되어 있는지 확인합니다.
+                if (parentNode && parentNode.closest(value)) {
+                    // 이미 적용된 상태라면, 일반 단락('p')으로 변경하여 스타일을 해제합니다.
+                    document.execCommand('formatBlock', false, 'p');
+                } else {
+                    // 적용되지 않은 상태라면, 요청된 스타일을 적용합니다.
+                    document.execCommand(command, false, value);
+                }
+            } else {
+                // 'bold', 'italic' 등 다른 명령은 기존 방식대로 실행합니다.
+                document.execCommand(command, false, value);
+            }
+
             updateToolbarState();
         }
 
@@ -634,7 +655,7 @@
                  if (range.collapsed) {
                     const span = document.createElement('span');
                     span.style[styleProperty] = value;
-                    span.innerHTML = '&#8203;';
+                    span.innerHTML = '&#8203;'; // Zero-width space
                     range.insertNode(span);
                     range.setStart(span, 1);
                     range.collapse(true);
@@ -693,6 +714,7 @@
 
         editorContent.addEventListener('blur', (e) => {
             const selection = window.getSelection();
+            // 툴바의 요소를 클릭하는 경우에는 selection을 저장합니다.
             if (editorToolbar.contains(e.relatedTarget)) {
                 if (selection.rangeCount > 0) {
                     savedRange = selection.getRangeAt(0).cloneRange();
