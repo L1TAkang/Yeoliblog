@@ -1,25 +1,29 @@
+# deploy.yml
+
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - main # main 브랜치에 push될 때마다 실행됩니다.
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
+    steps: # 'steps:' 아래에 있는 모든 '-'는 같은 위치에서 시작해야 합니다.
       - name: Checkout 🛎️
         uses: actions/checkout@v3
 
-      # ❌ 15~18번째 줄에 있던 'Replace API keys' 단계는 완전히 삭제합니다.
-
+      # 👇 이 단계의 들여쓰기를 아래와 똑같이 맞춰주세요.
       - name: Deploy to GitHub Pages
+        # env, uses, with가 모두 같은 수준으로 들여쓰기 되어야 합니다.
+        env:
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_CONFIG }}
+          UNSPLASH_SECRET: ${{ secrets.UNSPLASH_ACCESS_KEY }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-          # 👇 build_command 부분만 이렇게 남겨두세요.
           build_command: |
-            sed -i "s|__FIREBASE_CONFIG__|${{ secrets.FIREBASE_CONFIG }}|g" index.html
-            sed -i "s|__UNSPLASH_ACCESS_KEY__|${{ secrets.UNSPLASH_ACCESS_KEY }}|g" index.html
+            sed -i "s|__FIREBASE_CONFIG__|${FIREBASE_SECRET}|g" index.html
+            sed -i "s|__UNSPLASH_ACCESS_KEY__|${UNSPLASH_SECRET}|g" index.html
