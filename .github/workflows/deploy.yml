@@ -27,7 +27,7 @@ jobs:
         run: |
           # '__FIREBASE_CONFIG__' 플레이스홀더를 GitHub Secret 값으로 교체합니다.
           # sed 명령어는 파일 내의 특정 문자열을 찾아 다른 문자열로 바꿔주는 역할을 합니다.
-          sed -i "s|'__FIREBASE_CONFIG__'|${{ secrets.FIREBASE_CONFIG }}|g" index.html
+          sed -i "s|__FIREBASE_CONFIG__|${{ secrets.FIREBASE_CONFIG }}|g" index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
