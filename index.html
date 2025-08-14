@@ -302,7 +302,7 @@
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         // --- Firebase 설정 ---
-        const firebaseConfig = JSON.parse('__FIREBASE_CONFIG__');
+        const firebaseConfig = __FIREBASE_CONFIG__;
 
         // Firebase 앱 초기화
         const app = initializeApp(firebaseConfig);
