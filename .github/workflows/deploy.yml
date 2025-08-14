@@ -24,11 +24,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
+      # Python 스크립트를 사용해서 index.html 파일의 내용을 안전하게 교체합니다.
       - name: Replace Firebase Config
+        env:
+          FIREBASE_CONFIG_SECRET: ${{ secrets.FIREBASE_CONFIG }}
         run: |
-          # '__FIREBASE_CONFIG__' 플레이스홀더를 GitHub Secret 값으로 교체합니다.
-          # awk를 사용하여 특수문자가 포함된 시크릿 값도 안전하게 처리합니다.
-          awk -v config="${{ secrets.FIREBASE_CONFIG }}" '{gsub(/__FIREBASE_CONFIG__/, config); print}' index.html > index.html.tmp && mv index.html.tmp index.html
+          python -c "
+          import os
+          file_path = 'index.html'
+          with open(file_path, 'r') as file:
+              file_data = file.read()
+          config_value = os.environ['FIREBASE_CONFIG_SECRET']
+          file_data = file_data.replace('__FIREBASE_CONFIG__', config_value)
+          with open(file_path, 'w') as file:
+              file.write(file_data)
+          "
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
