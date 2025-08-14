@@ -302,7 +302,7 @@
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         // --- Firebase 설정 ---
-        const firebaseConfig = JSON.parse('__FIREBASE_CONFIG__');
+        const firebaseConfig = JSON.parse('{"apiKey":"AIzaSyARfKoklog1zEHV99x1vVTZYyGrhgpjQmU","authDomain":"blog-secret-2508.firebaseapp.com","projectId":"blog-secret-2508","storageBucket":"blog-secret-2508.firebasestorage.app","messagingSenderId":"761025052871","appId":"1:761025052871:web:96049e6be28032135d7ee2","measurementId":"G-ELT3ND303Z"}');
 
         // Firebase 앱 초기화
         const app = initializeApp(firebaseConfig);
@@ -953,7 +953,7 @@
         });
 
         async function searchUnsplash(query) {
-            const UNSPLASH_ACCESS_KEY = '__UNSPLASH_ACCESS_KEY__';
+            const UNSPLASH_ACCESS_KEY = 'pDmvyv_BvilWorWK5aV9TWulgMSmo0ij71RFY-xrFLk';
             unsplashResults.innerHTML = '';
             const loading = document.createElement('p');
             loading.className = 'text-gray-500';
