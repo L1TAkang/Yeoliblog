@@ -44,7 +44,11 @@ jobs:
           publish_dir: ./
           
           # 배포 직전에 실행할 명령어입니다.
-          # index.html 파일의 placeholder를 환경 변수 값으로 교체합니다.
+          # 더 안정적인 방식으로 placeholder를 교체합니다.
           build_command: |
-            sed -i "s|__FIREBASE_CONFIG__|${FIREBASE_SECRET}|g" index.html
-            sed -i "s|__UNSPLASH_ACCESS_KEY__|${UNSPLASH_SECRET}|g" index.html
+            # 1. 원본(index.html)을 읽어서 키 값으로 교체한 뒤, 임시 파일(index.tmp)에 저장합니다.
+            cat index.html | sed "s|__FIREBASE_CONFIG__|${FIREBASE_SECRET}|g" | sed "s|__UNSPLASH_ACCESS_KEY__|${UNSPLASH_SECRET}|g" > index.tmp
+            # 2. 원본 파일을 삭제합니다.
+            rm index.html
+            # 3. 임시 파일의 이름을 원본 파일 이름(index.html)으로 변경합니다.
+            mv index.tmp index.html
