@@ -12,14 +12,14 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v3
 
-      - name: Replace API keys 🔑
-        run: |
-          sed -i "s|'__FIREBASE_CONFIG__'|'${{ secrets.FIREBASE_CONFIG }}'|g" index.html
-          sed -i "s|'__UNSPLASH_ACCESS_KEY__'|'${{ secrets.UNSPLASH_ACCESS_KEY }}'|g" index.html
+      # ❌ 15~18번째 줄에 있던 'Replace API keys' 단계는 완전히 삭제합니다.
 
-      - name: Deploy 🚀
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./
-          publish_branch: gh-pages # 배포할 브랜치
+          # 👇 build_command 부분만 이렇게 남겨두세요.
+          build_command: |
+            sed -i "s|__FIREBASE_CONFIG__|${{ secrets.FIREBASE_CONFIG }}|g" index.html
+            sed -i "s|__UNSPLASH_ACCESS_KEY__|${{ secrets.UNSPLASH_ACCESS_KEY }}|g" index.html
